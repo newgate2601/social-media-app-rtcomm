@@ -1,6 +1,9 @@
 package com.example.social_media_app_rtcomm.websocket;
 
 import com.example.social_media_app_rtcomm.redis.PresenceService;
+import com.example.social_media_app_rtcomm.redis.pub.RedisMessagePublisher;
+import com.example.social_media_app_rtcomm.redis.sub.config.RedisDynamicSubscriber;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -15,13 +18,13 @@ import java.util.List;
 
 @Component
 @Slf4j
+@AllArgsConstructor
 public class ChatMessageHandler extends TextWebSocketHandler {
-    List<WebSocketSession> webSocketSessions = Collections.synchronizedList(new ArrayList<>());
+    public static List<WebSocketSession> webSocketSessions = Collections.synchronizedList(new ArrayList<>());
     private final PresenceService presenceService;
+    private final RedisDynamicSubscriber redisDynamicSubscriber;
+    private final RedisMessagePublisher redisMessagePublisher;
 
-    public ChatMessageHandler(PresenceService presenceService){
-        this.presenceService = presenceService;
-    }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -31,6 +34,7 @@ public class ChatMessageHandler extends TextWebSocketHandler {
         presenceService.plus1ToSession(userId);
         log.error("Connect ok with userId = " + userId);
         log.error("Amount session of userId = " + presenceService.get(userId));
+        redisDynamicSubscriber.subscribeToChannelAfterWSConnect(userId);
     }
 
     @Override
@@ -39,15 +43,26 @@ public class ChatMessageHandler extends TextWebSocketHandler {
         webSocketSessions.remove(session);
         String userId = getUserIdBy(session);
         presenceService.minus1ToSession(userId);
-        log.error("Logout ok with userId = " + userId);
         log.error("Amount session of userId = " + presenceService.get(userId));
+        if (presenceService.get(userId) == 0){
+            redisDynamicSubscriber.unsubscribeFromChannel(userId);
+            presenceService.delete(userId);
+        }
+        log.error("Logout ok with userId = " + userId);
     }
 
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
-        super.handleMessage(session, message);
-        for (WebSocketSession webSocketSession : webSocketSessions) {
-            webSocketSession.sendMessage(message);
+//        super.handleMessage(session, message);
+//        for (WebSocketSession webSocketSession : webSocketSessions) {
+//            webSocketSession.sendMessage(message);
+//        }
+        String userId = getUserIdBy(session);
+        if ("1".equals(userId)) {
+            redisMessagePublisher.publish("2", "1 send message");
+        }
+        if ("2".equals(userId)) {
+            redisMessagePublisher.publish("1", "2 send message");
         }
     }
 
