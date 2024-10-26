@@ -5,8 +5,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+// state online, offline of user
 public class PresenceService {
-
+    // key: userId + value: amount session of user
     private final RedisTemplate<String, Integer> redisTemplate;
     private static final String CACHE_NAME = "presence";
 
