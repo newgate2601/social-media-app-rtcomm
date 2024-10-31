@@ -3,6 +3,7 @@ package com.example.social_media_app_rtcomm.websocket;
 import com.example.social_media_app_rtcomm.redis.PresenceService;
 import com.example.social_media_app_rtcomm.redis.pub.RedisMessagePublisher;
 import com.example.social_media_app_rtcomm.redis.sub.config.RedisDynamicSubscriber;
+import com.example.social_media_app_rtcomm.security.TokenHelper;
 import com.example.social_media_app_rtcomm.service.ChatService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +25,13 @@ public class ChatMessageHandler extends TextWebSocketHandler {
     private final RedisDynamicSubscriber redisDynamicSubscriber;
     private final RedisMessagePublisher redisMessagePublisher;
     private final ChatService chatService;
+    private final TokenHelper tokenHelper;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         super.afterConnectionEstablished(session);
-        String userId = getUserIdBy(session);
+        String accessToken = getAccessToken(session);
+        String userId = String.valueOf(tokenHelper.getUserIdFromToken(accessToken));
         List<WebSocketSession> webSocketSessionOfCurrentRequest;
         if (webSocketSessions.containsKey(userId)) {
             webSocketSessionOfCurrentRequest = webSocketSessions.get(userId);
@@ -48,8 +51,8 @@ public class ChatMessageHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         super.afterConnectionClosed(session, status);
-//        webSocketSessions.remove(session);
-        String userId = getUserIdBy(session);
+        String accessToken = getAccessToken(session);
+        String userId = String.valueOf(tokenHelper.getUserIdFromToken(accessToken));
         List<WebSocketSession> webSocketSessionsOfCurrentRequest = webSocketSessions.get(userId);
         webSocketSessionsOfCurrentRequest.remove(session);
         if (webSocketSessionsOfCurrentRequest.isEmpty()) {
@@ -69,32 +72,17 @@ public class ChatMessageHandler extends TextWebSocketHandler {
 
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
-//        super.handleMessage(session, message);
-//        for (WebSocketSession webSocketSession : webSocketSessions) {
-//            webSocketSession.sendMessage(message);
-//        }
-
         if (message instanceof TextMessage) {
-            // Cast the message to TextMessage
             TextMessage textMessage = (TextMessage) message;
-
-            // Get the message content as a string
             String messageContent = textMessage.getPayload();
-            log.info("Received message: " + messageContent);
 
-            chatService.sendMessage(messageContent, getUserIdBy(session));
+            log.error("Received message: " + messageContent + " !!!");
+
+            chatService.sendMessage(messageContent, getAccessToken(session));
         }
-
-//        String userId = getUserIdBy(session);
-//        if ("1".equals(userId)) {
-//            redisMessagePublisher.publish("2", "1 send message");
-//        }
-//        if ("2".equals(userId)) {
-//            redisMessagePublisher.publish("1", "2 send message");
-//        }
     }
 
-    private String getUserIdBy(WebSocketSession session){
+    private String getAccessToken(WebSocketSession session){
         HttpHeaders headers = session.getHandshakeHeaders();
         return headers.getFirst("Authorization");
     }

@@ -4,23 +4,24 @@ import com.example.social_media_app_rtcomm.common.Common;
 import com.example.social_media_app_rtcomm.dto.message.MessageInput;
 import com.example.social_media_app_rtcomm.entity.ChatEntity;
 import com.example.social_media_app_rtcomm.entity.MessageEntity;
+import com.example.social_media_app_rtcomm.entity.UserChatMapEntity;
 import com.example.social_media_app_rtcomm.redis.PresenceService;
 import com.example.social_media_app_rtcomm.redis.pub.RedisMessagePublisher;
 import com.example.social_media_app_rtcomm.repository.ChatRepository;
 import com.example.social_media_app_rtcomm.repository.CustomRepository;
 import com.example.social_media_app_rtcomm.repository.MessageRepository;
+import com.example.social_media_app_rtcomm.repository.UserChatMapRepository;
+import com.example.social_media_app_rtcomm.security.TokenHelper;
 import com.example.social_media_app_rtcomm.service.mapper.MessageMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
@@ -32,15 +33,16 @@ public class ChatService {
     private final MessageMapper messageMapper;
     private final PresenceService presenceService;
     private final RedisMessagePublisher redisMessagePublisher;
+    private final TokenHelper tokenHelper;
+    private final UserChatMapRepository userChatMapRepository;
 
     @Transactional
-    public void sendMessage(String messageJson, String userId) {
+    public void sendMessage(String messageJson, String accessToken) {
         try {
             MessageInput messageInput = objectMapper.readValue(messageJson, MessageInput.class);
             LocalDateTime now = LocalDateTime.now();
 
-//            Long senderId = TokenHelper.getUserIdFromToken(accessToken);
-            Long senderId = Long.valueOf(userId);
+            Long senderId = tokenHelper.getUserIdFromToken(accessToken);
 
             ChatEntity chatEntity = customRepository.getChat(messageInput.getChatId());
             chatEntity.setNewestUserId(senderId);
@@ -69,11 +71,34 @@ public class ChatService {
                 chatRepository.save(chatEntity);
                 // if chat user-user
                 if (chatEntity.getChatType().equals(Common.USER)) {
+                    assert chatId2 != null;
+                    messageInput.setChatId(chatId2);
                     sendMessageUserToUser(String.valueOf(chatEntity.getUserId2()), messageInput);
+                }
+                else if (chatEntity.getChatType().equals(Common.GROUP)) {
+                    sendMessageToUsersInGroup(senderId, messageInput);
                 }
             });
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void sendMessageToUsersInGroup(Long senderId, MessageInput messageInput){
+        List<UserChatMapEntity> userChatMapEntities =
+                userChatMapRepository.findAllByChatId(messageInput.getChatId());
+        if (Objects.isNull(userChatMapEntities)
+                || userChatMapEntities.isEmpty()
+                || userChatMapEntities.size() == 1){
+            return;
+        }
+        List<Long> receiverIds = userChatMapEntities.stream()
+                .map(UserChatMapEntity::getUserId)
+                .distinct()
+                .filter(id -> !id.equals(senderId))
+                .toList();
+        for (Long receiverId : receiverIds){
+            sendMessageUserToUser(String.valueOf(receiverId), messageInput);
         }
     }
 
