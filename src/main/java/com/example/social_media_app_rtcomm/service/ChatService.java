@@ -37,51 +37,44 @@ public class ChatService {
     private final UserChatMapRepository userChatMapRepository;
 
     @Transactional
-    public void sendMessage(String messageJson, String accessToken) {
-        try {
-            MessageInput messageInput = objectMapper.readValue(messageJson, MessageInput.class);
-            LocalDateTime now = LocalDateTime.now();
+    public void sendMessage(MessageInput messageInput, Long senderId) {
+        LocalDateTime now = LocalDateTime.now();
 
-            Long senderId = tokenHelper.getUserIdFromToken(accessToken);
+        ChatEntity chatEntity = customRepository.getChat(messageInput.getChatId());
+        chatEntity.setNewestUserId(senderId);
+        chatEntity.setNewestMessage(messageInput.getMessage());
+        chatEntity.setNewestChatTime(now);
 
-            ChatEntity chatEntity = customRepository.getChat(messageInput.getChatId());
-            chatEntity.setNewestUserId(senderId);
-            chatEntity.setNewestMessage(messageInput.getMessage());
-            chatEntity.setNewestChatTime(now);
-
-            MessageEntity messageEntity = messageMapper.getEntityFromInput(messageInput);
-            messageEntity.setSenderId(senderId);
-            messageEntity.setCreatedAt(LocalDateTime.now());
-            Long chatId2;
-            if (chatEntity.getChatType().equals(Common.USER)) {
-                ChatEntity chatEntity2 = chatRepository.findByUserId1AndUserId2(chatEntity.getUserId2(), chatEntity.getUserId1());
-                chatId2 = chatEntity2.getId();
-                messageEntity.setChatId1(chatEntity.getId());
-                messageEntity.setChatId2(chatEntity2.getId());
-                chatEntity2.setNewestMessage(messageInput.getMessage());
-                chatEntity2.setNewestUserId(senderId);
-                chatEntity2.setNewestChatTime(now);
-                chatRepository.save(chatEntity2);
-            } else {
-                chatId2 = null;
-                messageEntity.setGroupChatId(chatEntity.getId());
-            }
-            messageRepository.save(messageEntity);
-            CompletableFuture.runAsync(() -> {
-                chatRepository.save(chatEntity);
-                // if chat user-user
-                if (chatEntity.getChatType().equals(Common.USER)) {
-                    assert chatId2 != null;
-                    messageInput.setChatId(chatId2);
-                    sendMessageUserToUser(String.valueOf(chatEntity.getUserId2()), messageInput);
-                }
-                else if (chatEntity.getChatType().equals(Common.GROUP)) {
-                    sendMessageToUsersInGroup(senderId, messageInput);
-                }
-            });
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        MessageEntity messageEntity = messageMapper.getEntityFromInput(messageInput);
+        messageEntity.setSenderId(senderId);
+        messageEntity.setCreatedAt(LocalDateTime.now());
+        Long chatId2;
+        if (chatEntity.getChatType().equals(Common.USER)) {
+            ChatEntity chatEntity2 = chatRepository.findByUserId1AndUserId2(chatEntity.getUserId2(), chatEntity.getUserId1());
+            chatId2 = chatEntity2.getId();
+            messageEntity.setChatId1(chatEntity.getId());
+            messageEntity.setChatId2(chatEntity2.getId());
+            chatEntity2.setNewestMessage(messageInput.getMessage());
+            chatEntity2.setNewestUserId(senderId);
+            chatEntity2.setNewestChatTime(now);
+            chatRepository.save(chatEntity2);
+        } else {
+            chatId2 = null;
+            messageEntity.setGroupChatId(chatEntity.getId());
         }
+        messageRepository.save(messageEntity);
+//        CompletableFuture.runAsync(() -> {
+            chatRepository.save(chatEntity);
+            // if chat user-user
+            if (chatEntity.getChatType().equals(Common.USER)) {
+                assert chatId2 != null;
+                messageInput.setChatId(chatId2);
+                sendMessageUserToUser(String.valueOf(chatEntity.getUserId2()), messageInput);
+            }
+            else if (chatEntity.getChatType().equals(Common.GROUP)) {
+                sendMessageToUsersInGroup(senderId, messageInput);
+            }
+//        });
     }
 
     private void sendMessageToUsersInGroup(Long senderId, MessageInput messageInput){

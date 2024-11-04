@@ -11,9 +11,8 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MessageInput implements Serializable {
-    @NonNull
     private Long chatId;
-    @NotBlank
     private String message;
     private String receiverId;
+    private String accessToken;
 }

@@ -39,10 +39,10 @@ public class RedisMessageSubscriber implements MessageListener {
                     .build();
 
             String messageOutputJson = objectMapper.writeValueAsString(messageOutput);
-
-            if (ChatMessageHandler.webSocketSessions.containsKey(messageInput.getReceiverId())){
+            Long receiverId = Long.valueOf(messageInput.getReceiverId());
+            if (ChatMessageHandler.webSocketSessions.containsKey(receiverId)){
                 List<WebSocketSession> webSocketSessions =
-                        ChatMessageHandler.webSocketSessions.get(messageInput.getReceiverId());
+                        ChatMessageHandler.webSocketSessions.get(receiverId);
                 for (WebSocketSession webSocketSession : webSocketSessions){
                     webSocketSession.sendMessage(new TextMessage(messageOutputJson));
                 }
