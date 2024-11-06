@@ -3,14 +3,12 @@ package com.example.social_media_app_rtcomm.service;
 import com.example.social_media_app_rtcomm.common.Common;
 import com.example.social_media_app_rtcomm.dto.message.MessageInput;
 import com.example.social_media_app_rtcomm.entity.ChatEntity;
+import com.example.social_media_app_rtcomm.entity.EventNotificationEntity;
 import com.example.social_media_app_rtcomm.entity.MessageEntity;
 import com.example.social_media_app_rtcomm.entity.UserChatMapEntity;
 import com.example.social_media_app_rtcomm.redis.PresenceService;
 import com.example.social_media_app_rtcomm.redis.pub.RedisMessagePublisher;
-import com.example.social_media_app_rtcomm.repository.ChatRepository;
-import com.example.social_media_app_rtcomm.repository.CustomRepository;
-import com.example.social_media_app_rtcomm.repository.MessageRepository;
-import com.example.social_media_app_rtcomm.repository.UserChatMapRepository;
+import com.example.social_media_app_rtcomm.repository.*;
 import com.example.social_media_app_rtcomm.security.TokenHelper;
 import com.example.social_media_app_rtcomm.service.mapper.MessageMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +34,7 @@ public class ChatService {
     private final RedisMessagePublisher redisMessagePublisher;
     private final TokenHelper tokenHelper;
     private final UserChatMapRepository userChatMapRepository;
+    private final EventNotificationRepository eventNotificationRepository;
 
     @Transactional
     public void sendMessage(MessageInput messageInput, Long senderId) {
@@ -63,26 +63,37 @@ public class ChatService {
             messageEntity.setGroupChatId(chatEntity.getId());
         }
         messageRepository.save(messageEntity);
-//        CompletableFuture.runAsync(() -> {
+        CompletableFuture.runAsync(() -> {
             chatRepository.save(chatEntity);
             // if chat user-user
             if (chatEntity.getChatType().equals(Common.USER)) {
+                eventNotificationRepository.save(
+                        EventNotificationEntity.builder()
+                                .eventType(Common.MESSAGE)
+                                .userId(chatEntity.getUserId1())
+//                        .imageUrl(sender.getImageUrl())
+//                        .fullName(sender.getFullName())
+                                .state(Common.NEW_EVENT)
+                                .chatId(chatId2)
+                                .createdAt(now)
+                                .message(messageInput.getMessage())
+                                .build()
+                );
                 assert chatId2 != null;
                 messageInput.setChatId(chatId2);
                 sendMessageUserToUser(String.valueOf(chatEntity.getUserId2()), messageInput);
-            }
-            else if (chatEntity.getChatType().equals(Common.GROUP)) {
+            } else if (chatEntity.getChatType().equals(Common.GROUP)) {
                 sendMessageToUsersInGroup(senderId, messageInput);
             }
-//        });
+        });
     }
 
-    private void sendMessageToUsersInGroup(Long senderId, MessageInput messageInput){
+    private void sendMessageToUsersInGroup(Long senderId, MessageInput messageInput) {
         List<UserChatMapEntity> userChatMapEntities =
                 userChatMapRepository.findAllByChatId(messageInput.getChatId());
         if (Objects.isNull(userChatMapEntities)
                 || userChatMapEntities.isEmpty()
-                || userChatMapEntities.size() == 1){
+                || userChatMapEntities.size() == 1) {
             return;
         }
         List<Long> receiverIds = userChatMapEntities.stream()
@@ -90,21 +101,33 @@ public class ChatService {
                 .distinct()
                 .filter(id -> !id.equals(senderId))
                 .toList();
-        for (Long receiverId : receiverIds){
+        for (Long receiverId : receiverIds) {
+            eventNotificationRepository.save(
+                    EventNotificationEntity.builder()
+                            .eventType(Common.MESSAGE)
+                            .userId(receiverId)
+//                            .imageUrl(sender.getImageUrl())
+//                            .fullName(sender.getFullName())
+                            .state(Common.NEW_EVENT)
+                            .chatId(messageInput.getChatId())
+                            .createdAt(LocalDateTime.now())
+                            .message(messageInput.getMessage())
+                            .build()
+            );
             sendMessageUserToUser(String.valueOf(receiverId), messageInput);
         }
     }
 
-    private void sendMessageUserToUser(String receiverId, MessageInput messageInput){
+    private void sendMessageUserToUser(String receiverId, MessageInput messageInput) {
         Integer amountSessionOfReceiver = presenceService.get(receiverId);
         messageInput.setReceiverId(receiverId);
-        if (!Objects.isNull(amountSessionOfReceiver) && amountSessionOfReceiver > 0){
+        if (!Objects.isNull(amountSessionOfReceiver) && amountSessionOfReceiver > 0) {
             redisMessagePublisher.publish(receiverId, messageInput);
         }
     }
 
     @Transactional
-    public void createChatForUsersAfterAcceptFriend(Long receiverId, Long senderId){
+    public void createChatForUsersAfterAcceptFriend(Long receiverId, Long senderId) {
         // lay thong tin receiver, sender tu uaa service
 
         chatRepository.save(
