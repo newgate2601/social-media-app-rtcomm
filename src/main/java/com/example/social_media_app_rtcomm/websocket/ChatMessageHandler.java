@@ -64,17 +64,15 @@ public class ChatMessageHandler extends TextWebSocketHandler {
 
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
-        if (message instanceof TextMessage) {
-            TextMessage textMessage = (TextMessage) message;
+        if (message instanceof TextMessage textMessage) {
             String messageContent = textMessage.getPayload();
 
             log.error("Received message: " + messageContent + " !!!");
 
             MessageInput messageInput = objectMapper.readValue(messageContent, MessageInput.class);
             if (Objects.isNull(messageInput.getAccessToken())){
-                Long senderId = getUserId(session);
-                chatService.sendMessage(messageInput, senderId);
-            } else if (Objects.nonNull(messageInput.getAccessToken())) {
+                chatService.sendMessage(messageInput, session);
+            } else {
                 log.error("Received token: " + messageInput.getAccessToken() + " !!!");
                 handleFirstMessage(session, messageInput);
             }
@@ -84,7 +82,11 @@ public class ChatMessageHandler extends TextWebSocketHandler {
     private void handleFirstMessage(WebSocketSession currentSession, MessageInput messageInput) throws Exception {
         String accessToken = messageInput.getAccessToken();
         Long userId = tokenHelper.getUserIdFromToken(accessToken);
+
         currentSession.getAttributes().put(Common.USER_ID, userId);
+        currentSession.getAttributes().put(Common.FULL_NAME, tokenHelper.getFullNameFromToken(accessToken));
+        currentSession.getAttributes().put(Common.IMAGE_URL, tokenHelper.getImageUrlFromToken(accessToken));
+
         List<WebSocketSession> webSocketSessionOfCurrentUser;
         if (webSocketSessions.containsKey(userId)) {
             webSocketSessionOfCurrentUser = webSocketSessions.get(userId);

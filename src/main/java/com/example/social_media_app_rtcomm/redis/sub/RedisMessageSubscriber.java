@@ -36,6 +36,9 @@ public class RedisMessageSubscriber implements MessageListener {
                     .createdAt(OffsetDateTime.now())
                     .message(messageInput.getMessage())
                     .chatId(messageInput.getChatId())
+                    .imageUrl(messageInput.getImageUrl())
+                    .fullName(messageInput.getFullName())
+                    .userId(messageInput.getUserId())
                     .build();
 
             String messageOutputJson = objectMapper.writeValueAsString(messageOutput);

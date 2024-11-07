@@ -14,5 +14,8 @@ public class MessageInput implements Serializable {
     private Long chatId;
     private String message;
     private String receiverId;
+    private String fullName;
+    private String imageUrl;
+    private Long userId;
     private String accessToken;
 }

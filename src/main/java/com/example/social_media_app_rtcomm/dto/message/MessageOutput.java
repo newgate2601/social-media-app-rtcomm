@@ -14,4 +14,7 @@ public class MessageOutput {
     private OffsetDateTime createdAt;
     private String message;
     private Long chatId;
+    private String fullName;
+    private String imageUrl;
+    private Long userId;
 }

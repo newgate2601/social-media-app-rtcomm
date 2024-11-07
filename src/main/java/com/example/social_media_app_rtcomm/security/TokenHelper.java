@@ -1,4 +1,5 @@
 package com.example.social_media_app_rtcomm.security;
+import com.example.social_media_app_rtcomm.common.Common;
 import lombok.AllArgsConstructor;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,19 @@ public class TokenHelper {
         token = token.substring(7);
         Jwt decodedJwt = jwtDecoder.decode(token);
         // Extract the user_id claim
-        return decodedJwt.getClaim("user_id");
+        return decodedJwt.getClaim(Common.USER_ID);
+    }
+
+    public String getImageUrlFromToken(String token) {
+        token = token.substring(7);
+        Jwt decodedJwt = jwtDecoder.decode(token);
+        return decodedJwt.getClaim(Common.IMAGE_URL);
+    }
+
+    public String getFullNameFromToken(String token) {
+        token = token.substring(7);
+        Jwt decodedJwt = jwtDecoder.decode(token);
+        // Extract the user_id claim
+        return decodedJwt.getClaim(Common.FULL_NAME);
     }
 }

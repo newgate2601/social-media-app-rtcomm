@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,8 +38,15 @@ public class ChatService {
     private final EventNotificationRepository eventNotificationRepository;
 
     @Transactional
-    public void sendMessage(MessageInput messageInput, Long senderId) {
+    public void sendMessage(MessageInput messageInput, WebSocketSession session) {
         LocalDateTime now = LocalDateTime.now();
+        Long senderId = (Long) session.getAttributes().get(Common.USER_ID);
+        String imageUrl = (String) session.getAttributes().get(Common.IMAGE_URL);
+        String fullName = (String) session.getAttributes().get(Common.FULL_NAME);
+
+        messageInput.setUserId(senderId);
+        messageInput.setImageUrl(imageUrl);
+        messageInput.setFullName(fullName);
 
         ChatEntity chatEntity = customRepository.getChat(messageInput.getChatId());
         chatEntity.setNewestUserId(senderId);
@@ -71,8 +79,8 @@ public class ChatService {
                         EventNotificationEntity.builder()
                                 .eventType(Common.MESSAGE)
                                 .userId(chatEntity.getUserId1())
-//                        .imageUrl(sender.getImageUrl())
-//                        .fullName(sender.getFullName())
+                                .imageUrl(imageUrl)
+                                .fullName(fullName)
                                 .state(Common.NEW_EVENT)
                                 .chatId(chatId2)
                                 .createdAt(now)
@@ -83,12 +91,13 @@ public class ChatService {
                 messageInput.setChatId(chatId2);
                 sendMessageUserToUser(String.valueOf(chatEntity.getUserId2()), messageInput);
             } else if (chatEntity.getChatType().equals(Common.GROUP)) {
-                sendMessageToUsersInGroup(senderId, messageInput);
+                sendMessageToUsersInGroup(senderId, fullName, imageUrl, messageInput);
             }
         });
     }
 
-    private void sendMessageToUsersInGroup(Long senderId, MessageInput messageInput) {
+    private void sendMessageToUsersInGroup(Long senderId, String fullName, String imageUrl,
+                                           MessageInput messageInput) {
         List<UserChatMapEntity> userChatMapEntities =
                 userChatMapRepository.findAllByChatId(messageInput.getChatId());
         if (Objects.isNull(userChatMapEntities)
@@ -106,8 +115,8 @@ public class ChatService {
                     EventNotificationEntity.builder()
                             .eventType(Common.MESSAGE)
                             .userId(receiverId)
-//                            .imageUrl(sender.getImageUrl())
-//                            .fullName(sender.getFullName())
+                            .imageUrl(imageUrl)
+                            .fullName(fullName)
                             .state(Common.NEW_EVENT)
                             .chatId(messageInput.getChatId())
                             .createdAt(LocalDateTime.now())
@@ -127,13 +136,15 @@ public class ChatService {
     }
 
     @Transactional
-    public void createChatForUsersAfterAcceptFriend(Long receiverId, Long senderId) {
+    public void createChatForUsersAfterAcceptFriend(Long receiverId,
+//                                                    String fullName, String imageUrl,
+                                                    Long senderId) {
         // lay thong tin receiver, sender tu uaa service
 
         chatRepository.save(
                 ChatEntity.builder()
-//                        .name(receiver.getFullName())
-//                        .imageUrl(receiver.getImageUrl())
+//                        .name(fullName)
+//                        .imageUrl(imageUrl)
                         .chatType(Common.USER)
                         .userId1(receiverId)
                         .userId2(senderId)
@@ -142,8 +153,8 @@ public class ChatService {
 
         chatRepository.save(
                 ChatEntity.builder()
-//                        .name(sender.getFullName())
-//                        .imageUrl(sender.getImageUrl())
+//                        .name(fullName)
+//                        .imageUrl(imageUrl)
                         .chatType(Common.USER)
                         .userId2(receiverId)
                         .userId1(senderId)

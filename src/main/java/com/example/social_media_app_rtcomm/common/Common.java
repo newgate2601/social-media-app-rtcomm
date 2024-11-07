@@ -1,6 +1,9 @@
 package com.example.social_media_app_rtcomm.common;
 
 public final class Common {
+    public static final String IMAGE_URL = "image_url";
+    public static final String FULL_NAME = "full_name";
+    public static final String USERNAME = "username";
     public static final String USER_ID = "user_id";
     public static final String CHAT = "CHAT";
     public static final String USER = "USER";

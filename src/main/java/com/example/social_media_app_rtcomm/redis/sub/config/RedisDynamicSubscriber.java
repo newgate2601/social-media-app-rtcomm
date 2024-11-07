@@ -36,7 +36,7 @@ public class RedisDynamicSubscriber {
 
     public void unsubscribeFromChannel(String channelName) {
         if (!userSubscribed.containsKey(channelName)) {
-            log.warn("Not subscribed to channel: " + channelName + " because don't have WS connection");
+            log.error("Not subscribed to channel: " + channelName + " because don't have WS connection");
             return;
         }
 
@@ -44,6 +44,6 @@ public class RedisDynamicSubscriber {
         redisContainer.removeMessageListener(listenerAdapter, new ChannelTopic(channelName));
         userSubscribed.remove(channelName); // Remove from tracking
 
-        log.info("Unsubscribed from channel: " + channelName + " successfully!!!");
+        log.error("Unsubscribed from channel: " + channelName + " successfully!!!");
     }
 }
