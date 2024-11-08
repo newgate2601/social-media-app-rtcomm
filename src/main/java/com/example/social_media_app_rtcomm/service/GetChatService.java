@@ -12,10 +12,6 @@ import com.example.social_media_app_rtcomm.security.TokenHelper;
 import com.example.social_media_app_rtcomm.service.mapper.MessageMapper;
 import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.antlr.v4.runtime.Token;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -91,7 +87,7 @@ public class GetChatService {
         if (Objects.nonNull(userChatMapEntities) && !userChatMapEntities.isEmpty()) {
             chatIds = userChatMapEntities.stream()
                     .map(UserChatMapEntity::getChatId)
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         Page<ChatEntity> chatEntities = Filter.builder(ChatEntity.class, entityManager)

@@ -47,6 +47,7 @@ public class ChatService {
         messageInput.setUserId(senderId);
         messageInput.setImageUrl(imageUrl);
         messageInput.setFullName(fullName);
+        messageInput.setType(Common.CHAT);
 
         ChatEntity chatEntity = customRepository.getChat(messageInput.getChatId());
         chatEntity.setNewestUserId(senderId);
@@ -79,12 +80,12 @@ public class ChatService {
                         EventNotificationEntity.builder()
                                 .eventType(Common.MESSAGE)
                                 .userId(chatEntity.getUserId1())
-                                .imageUrl(imageUrl)
-                                .fullName(fullName)
-                                .state(Common.NEW_EVENT)
+//                                .imageUrl(imageUrl)
+//                                .fullName(fullName)
+//                                .state(Common.NEW_EVENT)
                                 .chatId(chatId2)
-                                .createdAt(now)
-                                .message(messageInput.getMessage())
+//                                .createdAt(now)
+//                                .message(messageInput.getMessage())
                                 .build()
                 );
                 assert chatId2 != null;
@@ -115,12 +116,12 @@ public class ChatService {
                     EventNotificationEntity.builder()
                             .eventType(Common.MESSAGE)
                             .userId(receiverId)
-                            .imageUrl(imageUrl)
-                            .fullName(fullName)
-                            .state(Common.NEW_EVENT)
+//                            .imageUrl(imageUrl)
+//                            .fullName(fullName)
+//                            .state(Common.NEW_EVENT)
                             .chatId(messageInput.getChatId())
-                            .createdAt(LocalDateTime.now())
-                            .message(messageInput.getMessage())
+//                            .createdAt(LocalDateTime.now())
+//                            .message(messageInput.getMessage())
                             .build()
             );
             sendMessageUserToUser(String.valueOf(receiverId), messageInput);

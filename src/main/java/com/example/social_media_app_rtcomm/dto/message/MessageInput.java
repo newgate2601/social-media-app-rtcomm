@@ -16,6 +16,7 @@ public class MessageInput implements Serializable {
     private String receiverId;
     private String fullName;
     private String imageUrl;
-    private Long userId;
+    private Long userId; // sender
     private String accessToken;
+    private String type;
 }

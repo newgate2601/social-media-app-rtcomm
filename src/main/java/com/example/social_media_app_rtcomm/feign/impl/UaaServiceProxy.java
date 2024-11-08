@@ -14,6 +14,7 @@ public class UaaServiceProxy {
     private final UaaServiceClient uaaServiceClient;
 
     public List<UserDto> getUsersBy(@RequestParam List<Long> ids){
-        return uaaServiceClient.getUsersBy(ids);
+        List<UserDto> users = uaaServiceClient.getUsersBy(ids);
+        return users;
     }
 }

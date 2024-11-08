@@ -9,7 +9,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 @EnableDiscoveryClient
 public class SocialMediaAppRtcommApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(SocialMediaAppRtcommApplication.class, args);
 	}

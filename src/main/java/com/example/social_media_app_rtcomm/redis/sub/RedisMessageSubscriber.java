@@ -32,7 +32,7 @@ public class RedisMessageSubscriber implements MessageListener {
             log.info("Message received: " + messageInput.getMessage());
 
             MessageOutput messageOutput = MessageOutput.builder()
-                    .type(Common.CHAT)
+                    .type(messageInput.getType())
                     .createdAt(OffsetDateTime.now())
                     .message(messageInput.getMessage())
                     .chatId(messageInput.getChatId())

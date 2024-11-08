@@ -40,5 +40,4 @@ public class ChatController {
                                                     @RequestParam Long senderId){
         chatService.createChatForUsersAfterAcceptFriend(receiverId, senderId);
     }
-
 }
