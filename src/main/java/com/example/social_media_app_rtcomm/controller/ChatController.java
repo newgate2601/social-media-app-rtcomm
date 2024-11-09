@@ -1,6 +1,7 @@
 package com.example.social_media_app_rtcomm.controller;
 
 import com.example.social_media_app_rtcomm.common.Common;
+import com.example.social_media_app_rtcomm.dto.chat.CreateChatForUserDto;
 import com.example.social_media_app_rtcomm.dto.message.MessageOutputList;
 import com.example.social_media_app_rtcomm.entity.ChatOutput;
 import com.example.social_media_app_rtcomm.service.ChatService;
@@ -36,8 +37,8 @@ public class ChatController {
     }
 
     @PostMapping("/create-chat-after-accept-friend")
-    public void createChatForUsersAfterAcceptFriend(@RequestParam Long receiverId,
-                                                    @RequestParam Long senderId){
-        chatService.createChatForUsersAfterAcceptFriend(receiverId, senderId);
+    @Operation(summary = "Tạo mới cuộc trò chuyện sau khi kết bạn")
+    public void createChatForUsersAfterAcceptFriend(@RequestBody CreateChatForUserDto createChatForUserDto){
+        chatService.createChatForUsersAfterAcceptFriend(createChatForUserDto);
     }
 }

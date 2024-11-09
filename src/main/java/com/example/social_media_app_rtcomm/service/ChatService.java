@@ -1,6 +1,7 @@
 package com.example.social_media_app_rtcomm.service;
 
 import com.example.social_media_app_rtcomm.common.Common;
+import com.example.social_media_app_rtcomm.dto.chat.CreateChatForUserDto;
 import com.example.social_media_app_rtcomm.dto.message.MessageInput;
 import com.example.social_media_app_rtcomm.entity.ChatEntity;
 import com.example.social_media_app_rtcomm.entity.EventNotificationEntity;
@@ -137,28 +138,31 @@ public class ChatService {
     }
 
     @Transactional
-    public void createChatForUsersAfterAcceptFriend(Long receiverId,
-//                                                    String fullName, String imageUrl,
-                                                    Long senderId) {
+    public void createChatForUsersAfterAcceptFriend(CreateChatForUserDto createChatForUserDto) {
         // lay thong tin receiver, sender tu uaa service
-
         chatRepository.save(
                 ChatEntity.builder()
-//                        .name(fullName)
-//                        .imageUrl(imageUrl)
+                        .name(createChatForUserDto.getReceiverFullName())
+                        .imageUrl(createChatForUserDto.getReceiverImageUrl())
                         .chatType(Common.USER)
-                        .userId1(receiverId)
-                        .userId2(senderId)
+                        .userId1(createChatForUserDto.getReceiverId())
+                        .userId2(createChatForUserDto.getSenderId())
+                        .newestUserId(1L)
+                        .newestChatTime(LocalDateTime.now())
+                        .newestMessage("2 bạn vừa là bạn bè của nhau")
                         .build()
         );
 
         chatRepository.save(
                 ChatEntity.builder()
-//                        .name(fullName)
-//                        .imageUrl(imageUrl)
+                        .name(createChatForUserDto.getSenderFullName())
+                        .imageUrl(createChatForUserDto.getSenderImageUrl())
                         .chatType(Common.USER)
-                        .userId2(receiverId)
-                        .userId1(senderId)
+                        .userId2(createChatForUserDto.getReceiverId())
+                        .newestUserId(1L)
+                        .userId1(createChatForUserDto.getSenderId())
+                        .newestChatTime(LocalDateTime.now())
+                        .newestMessage("2 bạn vừa là bạn bè của nhau")
                         .build()
         );
     }
