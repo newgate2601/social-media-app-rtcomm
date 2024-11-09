@@ -71,6 +71,10 @@ public class ChatMessageHandler extends TextWebSocketHandler {
 
             MessageInput messageInput = objectMapper.readValue(messageContent, MessageInput.class);
             if (Objects.isNull(messageInput.getAccessToken())){
+                if (!session.getAttributes().containsKey(Common.USER_ID)){
+                    log.error("Must send access token previous send message !!!");
+                    throw new RuntimeException("Must send access token previous send message !!!");
+                }
                 chatService.sendMessage(messageInput, session);
             } else {
                 log.error("Received token: " + messageInput.getAccessToken() + " !!!");
@@ -84,6 +88,7 @@ public class ChatMessageHandler extends TextWebSocketHandler {
         Long userId = tokenHelper.getUserIdFromToken(accessToken);
 
         currentSession.getAttributes().put(Common.USER_ID, userId);
+        System.out.print("Set userId for this session = " + userId);
         currentSession.getAttributes().put(Common.FULL_NAME, tokenHelper.getFullNameFromToken(accessToken));
         currentSession.getAttributes().put(Common.IMAGE_URL, tokenHelper.getImageUrlFromToken(accessToken));
 

@@ -38,7 +38,6 @@ public class GetChatService {
     @Transactional
     public Page<MessageOutputList> getMessages(String accessToken, Long chatId, Pageable pageable) {
         Long userId = tokenHelper.getUserIdFromToken(accessToken);
-
         eventNotificationRepository.deleteAllByUserIdAndChatId(userId, chatId);
 
         Page<MessageEntity> messageEntities = Filter.builder(MessageEntity.class, entityManager)

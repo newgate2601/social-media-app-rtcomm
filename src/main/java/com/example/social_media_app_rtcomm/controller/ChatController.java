@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("api/v1/chat")
 @AllArgsConstructor
+@CrossOrigin
 public class ChatController {
     private final ChatService chatService;
     private final GetChatService getChatService;
