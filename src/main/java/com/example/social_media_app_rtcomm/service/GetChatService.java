@@ -92,7 +92,7 @@ public class GetChatService {
         Page<ChatEntity> chatEntities = Filter.builder(ChatEntity.class, entityManager)
                 .search()
                 .isIn("id", chatIds)
-                .isEqual("userId2", userId)
+                .isEqual("userId1", userId)
                 .filter()
                 .isContain("name", search)
                 .isNotNull("newestChatTime")

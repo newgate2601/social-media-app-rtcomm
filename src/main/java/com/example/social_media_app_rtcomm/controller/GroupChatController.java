@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("api/v1/group-chat")
 @AllArgsConstructor
-@CrossOrigin
 public class GroupChatController {
     private final GroupChatService groupchatService;
 
@@ -42,7 +41,10 @@ public class GroupChatController {
     @DeleteMapping("/delete-member")
     @Operation(summary = "Xóa thành viên khỏi nhóm chat")
     public void deleteMember(@RequestHeader("Authorization") String accessToken,
-                             @RequestBody ChatDeleteMemberInput chatDeleteMemberInput) {
+                             @RequestParam Long groupChatId,
+                             @RequestParam Long userId) {
+        ChatDeleteMemberInput chatDeleteMemberInput = new ChatDeleteMemberInput(
+                groupChatId, userId);
         groupchatService.deleteMember(accessToken, chatDeleteMemberInput);
     }
     @Operation(summary = "Tìm kiếm nhóm chat")

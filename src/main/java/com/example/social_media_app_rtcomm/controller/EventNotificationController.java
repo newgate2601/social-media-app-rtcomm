@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/event-notification")
 @AllArgsConstructor
-@CrossOrigin
 public class EventNotificationController {
     private final EventNotificationService eventNotificationService;
 

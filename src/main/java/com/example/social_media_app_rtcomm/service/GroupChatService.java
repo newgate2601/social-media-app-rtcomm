@@ -138,17 +138,12 @@ public class GroupChatService {
 
     @Transactional
     public void addNewMemberToGroupChat(ChatAddNewMemberInput chatAddNewMemberInput, String accessToken) {
-        ChatEntity chatEntity = customRepository.getChat(chatAddNewMemberInput.getGroupChatId());
-        if (!Objects.equals(chatEntity.getManagerId(), tokenHelper.getUserIdFromToken(accessToken))) {
-            throw new RuntimeException(Common.ACTION_FAIL);
-        }
-
         List<UserChatMapEntity> userChatMapEntities =
                 userChatMapRepository.findAllByChatId(chatAddNewMemberInput.getGroupChatId());
 
         List<Long> userIdsInGroup = userChatMapEntities.stream()
                 .map(UserChatMapEntity::getUserId)
-                .collect(Collectors.toList());
+                .toList();
 
         for (Long newUserId : chatAddNewMemberInput.getUserIds()) {
             if (!userIdsInGroup.contains(newUserId)) {
@@ -158,8 +153,6 @@ public class GroupChatService {
                                 .userId(newUserId)
                                 .build()
                 );
-            } else {
-                throw new RuntimeException(Common.ACTION_FAIL);
             }
         }
     }
