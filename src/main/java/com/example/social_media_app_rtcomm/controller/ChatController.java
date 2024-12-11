@@ -3,6 +3,7 @@ package com.example.social_media_app_rtcomm.controller;
 import com.example.social_media_app_rtcomm.common.Common;
 import com.example.social_media_app_rtcomm.dto.chat.CreateChatForUserDto;
 import com.example.social_media_app_rtcomm.dto.message.MessageOutputList;
+import com.example.social_media_app_rtcomm.entity.ChatEntity;
 import com.example.social_media_app_rtcomm.entity.ChatOutput;
 import com.example.social_media_app_rtcomm.service.ChatService;
 import com.example.social_media_app_rtcomm.service.GetChatService;
@@ -19,6 +20,12 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
     private final ChatService chatService;
     private final GetChatService getChatService;
+
+    @Operation
+    @GetMapping("/detail")
+    public ChatEntity getChatBy(@RequestParam Long userId1, @RequestParam Long userId2) {
+        return getChatService.getChatBy(userId1, userId2);
+    }
 
     @Operation(summary = "Lấy danh sách tin nhắn trong cuộc trò chuyện")
     @GetMapping("/messages")

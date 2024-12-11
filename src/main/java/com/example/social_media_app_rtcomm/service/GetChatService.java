@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,13 @@ public class GetChatService {
     private final UaaServiceProxy uaaServiceProxy;
     private final MessageMapper messageMapper;
     private final EventNotificationRepository eventNotificationRepository;
+    private final ChatRepository chatRepository;
+
+    @Transactional(readOnly = true)
+    public ChatEntity getChatBy(Long userId1, Long userId2){
+        // userId 1 laf minh, userId2 la ban be
+        return chatRepository.findByUserId1AndUserId2(userId1, userId2);
+    }
 
     @Transactional
     public Page<MessageOutputList> getMessages(String accessToken, Long chatId, Pageable pageable) {
