@@ -3,23 +3,23 @@ package com.example.social_media_app_rtcomm.service;
 import com.example.social_media_app_rtcomm.common.Common;
 import com.example.social_media_app_rtcomm.dto.chat.CreateChatForUserDto;
 import com.example.social_media_app_rtcomm.dto.message.MessageInput;
+import com.example.social_media_app_rtcomm.dto.message.MessageOutput;
 import com.example.social_media_app_rtcomm.entity.ChatEntity;
 import com.example.social_media_app_rtcomm.entity.EventNotificationEntity;
 import com.example.social_media_app_rtcomm.entity.MessageEntity;
 import com.example.social_media_app_rtcomm.entity.UserChatMapEntity;
+import com.example.social_media_app_rtcomm.feign.PushServiceClient;
 import com.example.social_media_app_rtcomm.redis.PresenceService;
 import com.example.social_media_app_rtcomm.redis.pub.RedisMessagePublisher;
 import com.example.social_media_app_rtcomm.repository.*;
-import com.example.social_media_app_rtcomm.security.TokenHelper;
 import com.example.social_media_app_rtcomm.service.mapper.MessageMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -28,15 +28,14 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class ChatService {
     private final ChatRepository chatRepository;
-    private final ObjectMapper objectMapper;
     private final MessageRepository messageRepository;
     private final CustomRepository customRepository;
     private final MessageMapper messageMapper;
     private final PresenceService presenceService;
     private final RedisMessagePublisher redisMessagePublisher;
-    private final TokenHelper tokenHelper;
     private final UserChatMapRepository userChatMapRepository;
     private final EventNotificationRepository eventNotificationRepository;
+    private final PushServiceClient pushService;
 
     @Transactional
     public void sendMessage(MessageInput messageInput, WebSocketSession session) {
@@ -133,7 +132,19 @@ public class ChatService {
         Integer amountSessionOfReceiver = presenceService.get(receiverId);
         messageInput.setReceiverId(receiverId);
         if (!Objects.isNull(amountSessionOfReceiver) && amountSessionOfReceiver > 0) {
-            redisMessagePublisher.publish(receiverId, messageInput);
+            CompletableFuture.runAsync(() -> {
+                pushService.sendMessageToAllDevices(
+                        Long.valueOf(receiverId), MessageOutput.builder()
+                                .createdAt(OffsetDateTime.now())
+                                .fullName(messageInput.getFullName())
+                                .imageUrl(messageInput.getImageUrl())
+                                .userId(messageInput.getUserId())
+                                .type(Common.MESSAGE)
+                                .chatId(messageInput.getChatId())
+                                .build()
+                );
+                redisMessagePublisher.publish(receiverId, messageInput);
+            });
         }
     }
 
