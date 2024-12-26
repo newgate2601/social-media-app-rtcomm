@@ -47,6 +47,7 @@ public class GroupChatController {
                 groupChatId, userId);
         groupchatService.deleteMember(accessToken, chatDeleteMemberInput);
     }
+
     @Operation(summary = "Tìm kiếm nhóm chat")
     @GetMapping("/search")
     public Page<GroupChatOutput> getGroups(
